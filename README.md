@@ -9,7 +9,7 @@ This is the official repository for our paper,
 
 1p/19qNET is an advanced AI network designed to enhance glioma diagnosis and treatment. It predicts alterations in 1p and 19q chromosomes and classifies IDH-mutant gliomas using whole slide images (WSIs). With a weakly-supervised learning approach, it reduces reliance on human annotation and workload. Its superior predictive power over traditional FISH methods is demonstrated through training on extensive next-gen sequencing data and independent validation. The network not only provides explainable heatmaps for clinician use but also holds potential for broad applications in diverse tumor classifications.
 
-
+![Fig1](https://github.com/rogo96/1p19qNet/assets/65914374/c1f16ada-6fac-4147-afe2-49ab6fcabeec)
 ---
 
 
