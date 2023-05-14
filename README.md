@@ -36,7 +36,7 @@ The layout is organized as follows.
     ├── Tile_position
     │   │   │── tcga_1.pickle
     │   │   │── ...
-    ├── WSI(recommend for your WSI directory)
+    ├── WSI(recommendation for your WSI directory)
          │   │── 0
                 │──── custom_a.svs
                 │──── ...
