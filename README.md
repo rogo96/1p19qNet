@@ -11,30 +11,62 @@ This is the official repository for our paper,
 
 
 ---
-# Environment setup
 
-~ing
+
+# Environment setup
+coming soon
 
 ---
 # Data Preparation
-* 보안때문에 ours data는 공개하지 않는다고 말해주기
-The layout is organized as follows
-디렉토리 구성 그림
+Due to patient data privacy concerns, we do not publicly disclose Our Whole Slide Image(WSI). 
 
-## Download pre-trained 1p19qNet checkpoints
-We trained 1p19qNet on Our data. You can Download ~ directory from google drive and place them under ~
+Instead, we provide feature files from TCGA data for inference purposes.
 
+## Download preprocessing TCGA features & pickle files
+The files can be downloaded from the link provided, and the layout is organized as follows:
 
+The layout is organized as follows.
+```
+1p19qNet
+├── Data
+│   ├── Feature
+    │   │   │── total
+                │──── tcga_1.h5
+                │──── ...
+    │   │   │── TCGA.xlsx
+    ├── Tile_position
+    │   │   │── tcga_1.pickle
+    │   │   │── ...
+```
 
 ---
 # Running Code
-~~
+1. Pretrained Model Evaluation:
+
+   Evaluate the performance of the pretrained model that has been downloaded. 
+
+2. Training and Evaluation with Custom Data:
+
+   Train and evaluate the model using your own custom dataset with cross-validation.
 
 ## Evaluation Code
+A script for running the evaluation code only.
+```
+python3 test_external.py --dname_1pNet [1p_model] --dname_19qNet [19q_model] --feat_dir=[feature_dir] --max_r=[eMethod3 N] --gpu=[gpu_num] --boot_num=[bootstrap iterations]
 
-### Download preprocessing TCGA features
+ex) run inference (no bootstrap)
+python3 test_external.py --dname_1pNet 1pNet --dname_19qNet 19qNet --max_r=100 --gpu=0 --feat_dir=Data/Feature
 
-~~~
+ex) run inference (bootstrap 1000)
+python3 test_external.py --dname_1pNet 1pNet --dname_19qNet 19qNet --max_r=100 --gpu=0 --feat_dir=Data/Feature --boot_num=1000
+```
+---
+## Custom data
+1. Data preprocessing
+2. train model
+3. evaluation model
+### Data preprocessing
+
 
 ### Custom Dataset
 
