@@ -82,6 +82,7 @@ Evaluation using a pretrained model.
 * feat_dir : path of the features after preprocessing for evaluation.
 * dname_1pNet, dname_19qNet : path of the pretrained models / default directory(trained on our WSIs data) 
 * If you want to use a pretrained model trained on custom data, utilize the trained model from the Training Code below.
+* The AUC, accuracy, precision, recall, f1 score, and confusion matrix for 1p, 19q, and the final result are available in the Performance and Result directories.
 ~~~
 python3 test_model.py --dname_1pNet=[1p_model] --dname_19qNet=[19q_model] --feat_dir=[feature dir path] --max_r=[eMethod3 N] --gpu=[gpu_num] --boot_num=[bootstrap iterations]
 
@@ -112,6 +113,7 @@ ex) python3 train_model.py --dname_1pNet=[custom_1p] --dname_19qNet=[custom_19q]
 ---
 # Visualization (Heatmap, Key tiles)
 Visualization of which tiles the model relies on to make label predictions.
+* The visualization result images are located in the Result directory.
 ~~~
 run visualization (all data)
 ex) python3 visualization.py --dname_1pNet=[custom_1p] --dname_19qNet=[custom_1p] --wsi_dir=[custom wsi path] --tile_dir=[custom tile path] --feat_dir=[feature dir path]
