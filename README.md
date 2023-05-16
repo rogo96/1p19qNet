@@ -44,8 +44,8 @@ Due to patient data privacy concerns, we do not publicly disclose Our Whole Slid
 # Running Code
 1. Data Preprocessing:
    
-   * WSIs are divided into smaller tiles and transformed into features.
-   * Perform additional tasks to improve performance & model training.
+* WSIs are divided into smaller tiles and transformed into features.
+* Perform additional tasks to improve performance & model training.
 
 2. Pretrained Model Evaluation:
 
