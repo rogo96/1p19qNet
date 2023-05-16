@@ -10,7 +10,6 @@ import numpy as np
 from PIL import Image
 from collections import OrderedDict
 from sklearn.utils import shuffle
-import tables
 import pickle
 import albumentations as A
 
@@ -192,3 +191,4 @@ if __name__ == '__main__':
         raise ValueError('Need one excel file in your Data directory, check Feature directory')
     else:
         shutil.move(os.path.join(excel_file[0]), feats_path)
+        os.rmdir(excel_path)

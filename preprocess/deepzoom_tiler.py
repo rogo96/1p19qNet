@@ -79,13 +79,8 @@ class TileWorker(Process):
     def filter_blood(self, tile):
         img = cv2.imread(tile)
         hsv_tile = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-        # 175였음
-        # filter_tile = cv2.inRange(hsv_tile, (172, 75, 0), (179, 255, 255))
-        # filter_tile = cv2.inRange(hsv_tile, (172, 75, 0), (179, 255, 255))
         filter_tile = cv2.inRange(hsv_tile, (175, 75, 0), (179, 255, 255))
 
-        # filter_tile2 = cv2.inRange(hsv_tile, (150, 0, 0), (160, 255, 255))
-        # if not np.all(filter_tile == 0) or not np.all(filter_tile2 == 0):
         if not np.all(filter_tile == 0):
             os.remove(tile)
         
@@ -165,7 +160,6 @@ class DeepZoomStaticTiler(object):
         self._queue = JoinableQueue(2 * workers)
         self._workers = workers
         self._dzi_data = {}
-        # FIXME: FIX
         self.slide_dir = slidepath.split('/')[-1].split('.')[0]
         print(f'slide_dir: {self.slide_dir}')
         
@@ -224,9 +218,9 @@ class DeepZoomStaticTiler(object):
             self._queue.put(None)
         self._queue.join()
 
-def make_excel(img_slide, img_name):
+def make_excel(img_slide, img_name, out_base):
     excel_name = img_slide.split(os.sep)[-3] + '.xlsx'
-    excel_path = '../Data/' + excel_name
+    excel_path = os.path.join(out_base, '..', 'temp_excel', excel_name)
     img_class = img_slide.split(os.sep)[-2]
     data_dict = {'Serial Number': [img_name], 'Class': [img_class], 'FISH1': [np.NaN], 'NGS1': [np.NaN], 'FISH19': [np.NaN], 'NGS19': [np.NaN]}
     if not os.path.isfile(excel_path):
@@ -244,7 +238,7 @@ def make_excel(img_slide, img_name):
 def nested_patches(img_slide, out_base, level=(0,), ext='jpeg'):
     print('\n Organizing patches')
     img_name = img_slide.split(os.sep)[-1].split('.')[0]
-    make_excel(img_slide, img_name)
+    make_excel(img_slide, img_name, out_base)
     n_levels = len(glob.glob('WSI_temp_files/*'))
     bag_path = os.path.join(out_base, img_name)
     os.makedirs(bag_path, exist_ok=True)

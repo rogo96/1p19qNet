@@ -4,7 +4,6 @@ import numpy as np
 from torch.optim import Adam
 from torch.utils.data import DataLoader
 from train.data_loader_all import MIL as MIL
-# from train.data_loader_no_ngs import External_validation
 from train.model_all import Model
 from train.trainer_all_AUC import Trainer
 from helper.load_model import load_best_model

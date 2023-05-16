@@ -83,7 +83,7 @@ class Trainer():
            
             # if loss has nan value, stop training
             if torch.isnan(loss):
-                raise ValueError('train loss is nan')
+                raise ValueError('train loss is nan, check github data preprocessing part (excel)')
 
             optimizer.zero_grad()
             loss.backward()

@@ -20,11 +20,8 @@ class Model(nn.Module):
             ('sigmoid_2', nn.Sigmoid()),
             ('fc4', self.fc_final),
         ]))     
-        # TODO: remove classification
         self.last_activation = nn.Sigmoid()
         
-        
-    # TODO: need annotation
     def forward(self,x):    
         B, T, F = x.shape
         x = x.view(B*T, F)      
