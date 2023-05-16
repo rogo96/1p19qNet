@@ -4,8 +4,7 @@ from torch.utils.data import DataLoader
 import torchvision.models as models
 import torchvision.transforms.functional as VF
 from torchvision import transforms
-
-import sys, argparse, os, glob, copy
+import sys, argparse, os, glob, copy, shutil
 import pandas as pd
 import numpy as np
 from PIL import Image
@@ -30,9 +29,9 @@ class IClassifier(nn.Module):
         
     def forward(self, x):
         device = x.device
-        feats = self.feature_extractor(x) # Bs x 2048
-        c = self.fc(feats.view(feats.shape[0], -1)) # BS x 2
-        return feats.view(feats.shape[0], -1), c    # BS x 2048,  BS x 2
+        feats = self.feature_extractor(x) 
+        c = self.fc(feats.view(feats.shape[0], -1)) 
+        return feats.view(feats.shape[0], -1), c    
 
 class BagDataset():
     def __init__(self, h5_file, transform=None):
@@ -107,26 +106,19 @@ class Compose(object):
 def bag_dataset(args, h5_file_path):
     transformed_dataset = BagDataset(h5_file=h5_file_path,
                                     transform=Compose([
-                                        # stain_normalize(normalizer),
                                         ToTensor(),
-                                        # RGBshift(),
                                     ]))
     dataloader = DataLoader(transformed_dataset, batch_size=args.batch_size, shuffle=False, num_workers=args.num_workers)
     
     return dataloader, len(transformed_dataset)
 
-def compute_feats(args, bags_list, i_classifier, total_list, save_path=None):
+def compute_feats(args, bags_list, i_classifier, total_list, feats_path=None, tile_poisition_path=None):
     i_classifier.eval()
     num_bags = len(bags_list)
 
     for i in tqdm(range(0, num_bags)):
-        # if bags_list[i].split(os.path.sep)[-1] in temp:
-        #     continue
         feats_list = []
         binary_file_path = glob.glob(os.path.join(bags_list[i], '*.jpeg'))
-        # binary_file_path = glob.glob(os.path.join(bags_list[i], '*.jpeg'))
-        
-        # dataloader, bag_size =  bag_dataset(args, binary_file_path, normalizer)
         dataloader, bag_size =  bag_dataset(args, binary_file_path)
         
         col_row = []
@@ -134,14 +126,9 @@ def compute_feats(args, bags_list, i_classifier, total_list, save_path=None):
             slide_name = bags_list[i].split(os.path.sep)[-1]
             print('\n',slide_name + '.h5')
             for iteration, (batch, tile_name) in enumerate(dataloader):
-                # if i == 0 and iteration == 0:
-                #     ex = make_grid(batch['input'], nrow=8)
-                #     # save_image(ex, args.output_dataset + '.jpg')
-                #     save_image(ex, 'tcga_stain_norm_rgb_norm' + '.jpg')
-                #     break
                 for idx in range(len(tile_name)):
-                    col = int(tile_name[idx].split('/')[-1].split('_')[1])
-                    row = int(tile_name[idx].split('/')[-1].split('_')[2].split('.')[0])
+                    col = int(tile_name[idx].split('/')[-1].split('_')[-2])
+                    row = int(tile_name[idx].split('/')[-1].split('_')[-1].split('.')[0])
                     col_row.append([col, row])
                 
                 patches = batch['input'].float().cuda() 
@@ -149,34 +136,21 @@ def compute_feats(args, bags_list, i_classifier, total_list, save_path=None):
                 feats = feats.cpu().numpy()
                 feats_list.extend(feats)
                 sys.stdout.write('\r Computed: {}/{} -- {}/{}'.format(i+1, num_bags, iteration+1, len(dataloader)))
-        ### print(feats_list)
-        # print(f'col_row: {col_row[0]}')    
         
-        with open(os.path.join('/data1/wsi/new_data/pickle', args.pickle, slide_name + '.pickle'),'wb') as fw:
-            pickle.dump(col_row, fw)       
-        # dh 0122
+        with open(os.path.join(tile_poisition_path, slide_name + '.pickle'),'wb') as fw:
+            pickle.dump(col_row, fw)    
+
         if len(feats_list) == 0:
             print('No valid patch extracted from: ' + bags_list[i])
         else:
-            #    밑꺼살려
             df = pd.DataFrame(feats_list)
-            
-            os.makedirs(os.path.join(save_path, 'total'), exist_ok=True)
+            os.makedirs(os.path.join(feats_path, 'total'), exist_ok=True)
 
-            ### os.makedirs(os.path.join(save_path, 'all_train'), exist_ok=True)
-            ### os.makedirs(os.path.join(save_path, 'all_val'), exist_ok=True)
-            ### os.makedirs(os.path.join(save_path, 'all_test'), exist_ok=True)
-            
-            #     밑꺼살려
             for file in total_list:
                 if bags_list[i].split(os.path.sep)[-1] in file:
-                    print('\n', save_path, bags_list[i].split(os.path.sep)[-1])
-                    df.to_hdf(os.path.join(save_path, 'total', bags_list[i].split(os.path.sep)[-1]+'.h5'), key='df', mode='w')
+                    df.to_hdf(os.path.join(feats_path, 'total', bags_list[i].split(os.path.sep)[-1]+'.h5'), key='df', mode='w')
                     break
                 
-                
-                
-          
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -184,9 +158,10 @@ if __name__ == '__main__':
     parser.add_argument('--batch_size', default=128, type=int, help='Batch size of dataloader [128]')
     parser.add_argument('--num_workers', default=4, type=int, help='Number of threads for datalodaer')
     parser.add_argument('--gpu_index', type=int, nargs='+', default=(0,), help='GPU ID(s) [0]')
-    parser.add_argument('--input_dataset', default='prepared_dataset', type=str)
-    parser.add_argument('--output_dataset', default='feature', type=str)
-    parser.add_argument('--pickle', default='1225_pickle', type=str)
+    parser.add_argument('--tile_path', default='../Data/Tile', type=str)
+    parser.add_argument('--feat_path', default='../Data/Feature', type=str)
+    parser.add_argument
+
     args = parser.parse_args()
     gpu_ids = tuple(args.gpu_index)
     os.environ['CUDA_VISIBLE_DEVICES']=','.join(str(x) for x in gpu_ids)
@@ -200,68 +175,20 @@ if __name__ == '__main__':
     
     i_classifier = IClassifier(resnet, num_feats, output_class=args.num_classes).cuda()
     
-    # bags_path = os.path.join('/home/dhlee/Chowder_Practice/WSI', args.dataset, 'single', '*', '*')
-    # bags_path = os.path.join('/data1/wsi/temp', '*', '*')
-    
-    # bags_path = os.path.join('/data1/wsi', args.input_dataset, '*', '*')
-    
-    # bags_path = os.path.join('/data1/TCGA_LGG/tiles', '*', '*')
-    # bags_path = os.path.join('/home/dhlee/Chowder_Practice/test_tiles', '*')
-    bags_path = os.path.join('/data1/wsi/new_data/tile/wsi', '*')
-    # bags_path = os.path.join('/data1/wsi/new_data/tile/0127_norm_tcga', '*')
-    
-    
-    
-    
-    
-    # bags_path = os.path.join('/data1/TCGA_LGG/1209_feature/TCGA_LGG', '*')
-    
-    
-    
-    
+    # transform tile to feature
+    bags_path = os.path.join(args.tile_path, '*')
     bags_list = glob.glob(bags_path)
-    # feats_path = os.path.join('/data1/wsi/feature', args.output_dataset)
-    # feats_path = os.path.join('/data1/wsi/feature/1212_feature')
-    # feats_path = os.path.join('data1/TCGA_LGG/feature/1214_feature')
-    feats_path = os.path.join('/data1/wsi/new_data/feature')
-    
-    
+    feats_path = args.feat_path
+    tile_poisition_path = os.path.join(args.feat_path, 'Tile_position')
     os.makedirs(feats_path, exist_ok=True)
-    
-    # total_list = os.listdir('/data1/w[s]i/prepared_dataset/total')
-    # total_list = os.listdir('/data1/wsi/abnormal_tile/wsi')
-    # total_list = os.listdir('/data1/TCGA_LGG/total/Astrocytoma') + os.listdir('/data1/TCGA_LGG/total/Oligodendroglioma')
-    # total_list = os.listdir('/home/dhlee/Chowder_Practice/test_tiles')
-    total_list = os.listdir('/data1/wsi/new_data/tile/wsi')
-    # total_list = os.listdir('/data1/wsi/new_data/tile/0127_norm_tcga')
-    
-    
-    # total_list = os.listdir('/data1/wsi/temp/wsi') 
-        
-    # total_list = os.listdir('/data1/wsi/temp')
-    
-    
-    # train_list = os.listdir('/data1/wsi/prepared_dataset/all_train')
-    # val_list = os.listdir('/data1/wsi/prepared_dataset/all_val')
-    # test_list = os.listdir('/data1/wsi/prepared_dataset/all_test')
-    # compute_feats(args, bags_list, i_classifier, train_list, val_list, test_list, feats_path)
-    
-    
-    # os.makedirs('/data1/wsi/feature/1109_pickle',exist_ok=True)
-    # os.makedirs('/data1/wsi/feature/col_row_pick_1212',exist_ok=True)
-    os.makedirs(os.path.join('/data1/wsi/new_data/pickle', args.pickle),exist_ok=True)
-    
-    
-    compute_feats(args, bags_list, i_classifier, total_list, feats_path)
-    
-    # n_classes = glob.glob(os.path.join('datasets', args.dataset, '*'+os.path.sep))
-    # n_classes = sorted(n_classes)
-    # all_df = []
-    # for i, item in enumerate(n_classes):
-    #     bag_h5 = glob.glob(os.path.join(item, '*.h5'))
-    #     bag_hdf = pd.read_hdf(bag_h5,'s')
-    #     # bag_hdf['label'] = i
-    #     bag_hdf.to_hdf(os.path.join('datasets', args.dataset, item.split(os.path.sep)[2]+'.h5'), key='df', mode='w')
-    # bags_path = pd.concat(all_df, axis=0, ignore_index=True)
-    # bags_path = shuffle(bags_path)
-    # bags_path.to_hdf(os.path.join('datasets', args.dataset, key='df', mode='w'))
+    os.makedirs(tile_poisition_path, exist_ok=True)
+    total_list = os.listdir(args.tile_path)
+    compute_feats(args, bags_list, i_classifier, total_list, feats_path, tile_poisition_path)
+
+    # move excel file in your feature directory 
+    excel_path = os.path.join(feats_path, '..')
+    excel_file = glob.glob(os.path.join(excel_path, '*.xlsx'))
+    if len(excel_file) != 1:
+        raise ValueError('Need one excel file in your Data directory, check Feature directory')
+    else:
+        shutil.move(os.path.join(excel_file[0]), feats_path)

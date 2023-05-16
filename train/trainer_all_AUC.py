@@ -19,22 +19,18 @@ class Trainer():
             n_time = args.seed_num
             self.dname_model = ospj('model', args.dname_1pNet + '_' + args.dname_19qNet, dname_net, str(n_time))
             self.dname_log = ospj('log', args.dname_1pNet + '_' + args.dname_19qNet, dname_net, str(n_time))
-            self.dname_ckpt = ospj('ckpt', args.dname_1pNet + '_' + args.dname_19qNet, dname_net, str(n_time))
         # all data (for external validation evaluation)
         elif cross_val == False:
             self.dname_model = ospj('model', args.dname_1pNet + '_' + args.dname_19qNet, dname_net, 'all')
             self.dname_log = ospj('log', args.dname_1pNet + '_' + args.dname_19qNet, dname_net, 'all')
-            self.dname_ckpt = ospj('ckpt', args.dname_1pNet + '_' + args.dname_19qNet, dname_net, 'all')
 
-        print(f'ngs_1_19 : {args.ngs_1_19}')
         os.makedirs(self.dname_model, exist_ok=True)
-        os.makedirs(self.dname_ckpt, exist_ok=True)
         os.makedirs(self.dname_log, exist_ok=True)
         self.args = args
         self.writer = SummaryWriter(log_dir=self.dname_log) 
         self.criterion = nn.MSELoss()
 
-    def train(self, model, optimizer, train_loader, val_loader, cross_val=None):
+    def train(self, model, optimizer, train_loader, val_loader):
         print('training starts!')
         worst_val_auc = -1
         for epoch in trange(1, self.args.num_epochs+1):
@@ -58,11 +54,6 @@ class Trainer():
             for k, v in val_log.items():
                 self.writer.add_scalar(k, v, epoch)
             
-            # checkpoint 
-            if epoch == self.args.num_epochs:
-                fname = ospj(self.dname_ckpt, 'best_model_' + str(epoch) + '.pth')
-                torch.save(model.state_dict(), fname)
-        
         
     def train_epoch(self, model, optimizer, train_loader):
         args = self.args
@@ -74,14 +65,13 @@ class Trainer():
         log = Munch()
 
         for i, (bag_feature, bag_label, ngs_1, ngs_19, slide) in enumerate(tqdm(train_loader, leave=False)):
-            bag_feature = bag_feature.to(torch.float32).to(args.device)   # (BS x N_tiles x 2048)
-            BS, T, F = bag_feature.shape       # (BS x N_tiles x 2048)
-            # batch_feature = bag_feature.view(B*T, F)    
+            bag_feature = bag_feature.to(torch.float32).to(args.device)   
+            BS, T, F = bag_feature.shape       
             batch_logits, tile_score = model(bag_feature)   
-            predict = batch_logits.squeeze(1)                     # [BS x 2]
+            predict = batch_logits.squeeze(1)                    
                     
             bag_label = bag_label.to(torch.float32).to(args.device)
-            ngs_1 = ngs_1.to(torch.float32).to(args.device)     #[BS]
+            ngs_1 = ngs_1.to(torch.float32).to(args.device)    
             ngs_19 = ngs_19.to(torch.float32).to(args.device)
             GT_CLASS.extend(bag_label.cpu().tolist())
             PREDICT.extend(predict.cpu().tolist())
@@ -102,7 +92,6 @@ class Trainer():
             
         fper, tper, thresholds = roc_curve(GT_CLASS, PREDICT, pos_label=0)
         auc_value = auc(fper, tper)
-        
         log.train_auc_value = auc_value
         log.train_loss = loss_epoch
         

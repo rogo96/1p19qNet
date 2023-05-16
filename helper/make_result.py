@@ -47,7 +47,7 @@ def plot_confusion_matrix(args, cm, target_names=None, cmap=None, normalize=True
     plt.ylabel('Ground Truth')
     plt.xlabel('Predicted')
     # plt.show()
-    file_path = ospj('Result', args.dname_1pNet + '_' + args.dname_19qNet)
+    file_path = ospj('Result', args.dname_1pNet + '_' + args.dname_19qNet + '_' + args.feat_dir.split('/')[-1])
     os.makedirs(file_path, exist_ok=True)
     plt.savefig(ospj(file_path, title + '.png'), dpi=300)
     plt.clf()
@@ -71,7 +71,6 @@ def plot_roc_curve(args, _1pNet, _19qNet, combine):
         interp_tpr[0] = 0.0
         tprs.append(interp_tpr)
 
-    # print(f'1 auc : {aucs}, np.std(aucs)')
     mean_tpr = np.mean(tprs, axis=0)
     mean_tpr[-1] = 1.0
     mean_auc = auc(mean_fpr, mean_tpr)
@@ -97,7 +96,6 @@ def plot_roc_curve(args, _1pNet, _19qNet, combine):
         interp_tpr[0] = 0.0
         tprs.append(interp_tpr)
 
-    # print(f'19 auc : {aucs}, np.std(aucs)')
     mean_tpr = np.mean(tprs, axis=0)
     mean_tpr[-1] = 1.0
     mean_auc = auc(mean_fpr, mean_tpr)
@@ -120,7 +118,6 @@ def plot_roc_curve(args, _1pNet, _19qNet, combine):
         interp_tpr[0] = 0.0
         tprs.append(interp_tpr)
 
-    # print(f'19 auc : {aucs}, np.std(aucs)')
     mean_tpr = np.mean(tprs, axis=0)
     mean_tpr[-1] = 1.0
     mean_auc = auc(mean_fpr, mean_tpr)
@@ -142,7 +139,7 @@ def plot_roc_curve(args, _1pNet, _19qNet, combine):
     upper_tpr = [min(1,x) for x in np.percentile(tprs, p, axis=0)]
     plt.fill_between(mean_fpr, lower_tpr, upper_tpr, color='grey', alpha=0.3, label='95%% CI (AUC = %.3f ~ %.3f)' % (lower, upper))
     plt.tight_layout()
-    file_path = ospj('Result', args.dname_1pNet + '_' + args.dname_19qNet)
+    file_path = ospj('Result', args.dname_1pNet + '_' + args.dname_19qNet + '_' + args.feat_dir.split('/')[-1])
     os.makedirs(file_path, exist_ok=True)
     plt.legend(loc='lower right')
     plt.savefig(ospj(file_path , 'bootstrap_ROC(external).png'), dpi=300)

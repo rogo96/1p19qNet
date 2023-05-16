@@ -62,10 +62,6 @@ def perform(args, output):
     _19qNet_metrics, _19qNet_cm = Metrics(fper_19q, tper_19q, thresholds_19q, predict_19s, gt_classes, None)
     _19qNet_AUC = auc(fper_19q, tper_19q)
     
-    ####plot_roc_curve_mix('fig4_tcga', fper_1, tper_1, auc_value_1, fper_19, tper_19, auc_value_19, args.seed_num)
-    # plot_predicit_value_ngs(predict_1s, predict_19s, gt_classes, args)
-    # plot_pearson(predict_1s, predict_19s, ngs_1s, ngs_19s, gt_classes, args)
-    
     return _1pNet_AUC, _19qNet_AUC, _1pNet_metrics, _19qNet_metrics
 
 def combine_perform(args, output, combine_model):
@@ -168,7 +164,6 @@ def Mean_metrics(boot_output, mode=None):
         mean_metrics.append(metrics)
     
     mean_metrics = np.mean(np.array(mean_metrics), axis=0)
-    print(f'len mean metrics, {len(mean_metrics)}')
     mean_auc = np.mean(np.array(aucs))
     
     return mean_metrics, mean_auc

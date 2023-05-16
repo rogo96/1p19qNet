@@ -6,6 +6,7 @@ import re
 import shutil
 import sys
 import glob
+import pandas as pd
 from xml import dom
 import numpy as np
 import math
@@ -15,7 +16,6 @@ from skimage.color import rgb2hsv
 from skimage.util import img_as_ubyte
 from skimage import filters
 from PIL import Image, ImageFilter, ImageStat
-from colorthief import ColorThief
 import cv2
 from tqdm import tqdm
 Image.MAX_IMAGE_PIXELS = None
@@ -61,7 +61,6 @@ class TileWorker(Process):
                 edge = ImageStat.Stat(edge).sum
                 edge = np.mean(edge)/(self._tile_size**2)
                 w, h = tile.size
-
                 ###########################################
                 # tile processing  
                 ###########################################
@@ -76,15 +75,18 @@ class TileWorker(Process):
                 pass
             self._queue.task_done()
 
-    # eliminate blood tile
+    # Remove blood tile
     def filter_blood(self, tile):
         img = cv2.imread(tile)
         hsv_tile = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
         # 175였음
         # filter_tile = cv2.inRange(hsv_tile, (172, 75, 0), (179, 255, 255))
-        filter_tile = cv2.inRange(hsv_tile, (172, 75, 0), (179, 255, 255))
-        filter_tile2 = cv2.inRange(hsv_tile, (150, 0, 0), (160, 255, 255))
-        if not np.all(filter_tile == 0) or not np.all(filter_tile2 == 0):
+        # filter_tile = cv2.inRange(hsv_tile, (172, 75, 0), (179, 255, 255))
+        filter_tile = cv2.inRange(hsv_tile, (175, 75, 0), (179, 255, 255))
+
+        # filter_tile2 = cv2.inRange(hsv_tile, (150, 0, 0), (160, 255, 255))
+        # if not np.all(filter_tile == 0) or not np.all(filter_tile2 == 0):
+        if not np.all(filter_tile == 0):
             os.remove(tile)
         
     def _get_dz(self, associated=None):
@@ -164,15 +166,9 @@ class DeepZoomStaticTiler(object):
         self._workers = workers
         self._dzi_data = {}
         # FIXME: FIX
-        self.slide_dir = slidepath.split('/')[-1].split('.')[0]  # wsi
+        self.slide_dir = slidepath.split('/')[-1].split('.')[0]
         print(f'slide_dir: {self.slide_dir}')
-
-        # FIXME: FIX
-        ## slide split 길이 0로만들어서 실험
-        # self.slide_dir = slidepath.split('/')[-1][5:12]  # 기존 TCGA
-        # self.slide_dir = slidepath.split('/')[-1][:12]  # 0126 TCGA
         
-        # self.slide_dir = slidepath.split('/')[-1][:-4]
         for _i in range(workers):
             TileWorker(self._queue, slidepath, tile_size, overlap,
                         limit_bounds, quality, threshold).start()
@@ -228,27 +224,34 @@ class DeepZoomStaticTiler(object):
             self._queue.put(None)
         self._queue.join()
 
+def make_excel(img_slide, img_name):
+    excel_name = img_slide.split(os.sep)[-3] + '.xlsx'
+    excel_path = '../Data/' + excel_name
+    img_class = img_slide.split(os.sep)[-2]
+    data_dict = {'Serial Number': [img_name], 'Class': [img_class], 'FISH1': [np.NaN], 'NGS1': [np.NaN], 'FISH19': [np.NaN], 'NGS19': [np.NaN]}
+    if not os.path.isfile(excel_path):
+        data_pd = pd.DataFrame(data_dict)
+        data_pd.set_index('Serial Number', inplace=True)
+        data_pd.to_excel(excel_path, engine='openpyxl')
+    else:
+        data_pd = pd.read_excel(excel_path, engine='openpyxl', index_col='Serial Number')
+        new_row = pd.DataFrame(data_dict)
+        new_row.set_index('Serial Number', inplace=True)
+        data_pd = data_pd.append(new_row)
+        data_pd.to_excel(excel_path, engine='openpyxl')
+
+
 def nested_patches(img_slide, out_base, level=(0,), ext='jpeg'):
     print('\n Organizing patches')
-    # img_name = img_slide.split(os.sep)[-1].split('.')[0]
-    # TODO: remove 1:10
     img_name = img_slide.split(os.sep)[-1].split('.')[0]
-    # img_name = img_slide.split(os.sep)[-1].split('.')[0][5:12] [1:10]
-    # img_name = img_slide.split(os.sep)[-1].split('.')[0][:12]
-    img_class = img_slide.split(os.sep)[-2]
-    c = 1
-    if os.path.isdir(os.path.join(out_base, img_class)):
-        c+=1
-        img_class = img_class + '_' + str(c)
-    # print(img_name, img_class)
+    make_excel(img_slide, img_name)
     n_levels = len(glob.glob('WSI_temp_files/*'))
-    bag_path = os.path.join(out_base, img_class, img_name)
+    bag_path = os.path.join(out_base, img_name)
     os.makedirs(bag_path, exist_ok=True)
     if len(level)==1:
         patches = glob.glob(os.path.join('WSI_temp_files', '*', '*.'+ext))
         for i, patch in enumerate(patches):
             patch_name = patch.split(os.sep)[-1]
-            # print(patch_name)
             shutil.move(patch, os.path.join(bag_path, patch_name))
             sys.stdout.write('\r Patch [%d/%d]' % (i+1, len(patches)))
         print('Done.')
@@ -289,13 +292,13 @@ if __name__ == '__main__':
     parser.add_argument('-v', '--slide_format', type=str, default='svs', help='Image format for tiles [svs]')
     parser.add_argument('-j', '--workers', type=int, default=4, help='Number of worker processes to start [4]')
     parser.add_argument('-q', '--quality', type=int, default=70, help='JPEG compression quality [70]')
-    parser.add_argument('-s', '--tile_size', type=int, default=224, help='Tile size [224]')
+    parser.add_argument('-s', '--tile_size', type=int, default=224, help='Tile size [224], only 224 can make heatmap')
     parser.add_argument('-b', '--base_mag', type=float, default=20, help='Maximum magnification for patch extraction [20]')
     parser.add_argument('-m', '--magnifications', type=int, nargs='+', default=(0,), help='Levels for patch extraction [0]')
     parser.add_argument('-o', '--objective', type=float, default=20, help='The default objective power if metadata does not present [20]')
-    parser.add_argument('-t', '--background_t', type=int, default=15, help='Threshold for filtering background [15]')  
-    parser.add_argument('-c', '--source', type=str, default='/data1/wsi/svs_images', help='Source folder for WSI')
-    parser.add_argument('-d', '--destination', type=str, default='/data1/wsi/new_data/tile', help='Destination folder for patches(tiles)')
+    parser.add_argument('-t', '--background_t', type=int, default=23, help='Threshold for filtering background [15]')  
+    parser.add_argument('-c', '--source', type=str, default='../Data/WSI', help='Source folder for WSI')
+    parser.add_argument('-d', '--destination', type=str, default='../Data/Tile', help='Destination folder for patches(tiles)')
     args = parser.parse_args()
     levels = tuple(args.magnifications)
     assert len(levels)<=2, 'Only 1 or 2 magnifications are supported!'
@@ -315,3 +318,4 @@ if __name__ == '__main__':
         print(f'{c_slide} end')
 
     print('Patch extraction done for {} slides.'.format(len(all_slides)))
+

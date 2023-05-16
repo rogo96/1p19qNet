@@ -3,7 +3,6 @@ from sklearn.metrics import roc_curve, auc
 import torch
 from torch.utils.data import DataLoader
 from train.data_loader_all import MIL as MIL
-# from model_all import Model
 from train.model_all import Model
 import os
 import numpy as np
