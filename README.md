@@ -29,12 +29,12 @@ Due to patient data privacy concerns, we do not publicly disclose Our Whole Slid
 ```
 1p19qNet
 ├── custom dataset
-       │   │── 0 (WSI splitting into two directories, one for 0 and one for 1, is necessary)
-               │──── custom_a.svs
-               │──── ...
-       │   │── 1
-               │──── custom_b.svs
-               │──── ...
+       │ ── 0 (WSI splitting into two directories, one for 0 and one for 1, is necessary)
+            │──── custom_a.svs
+            │──── ...
+       │ ── 1
+            │──── custom_b.svs
+            │──── ...
 ```
 ---
 # Running Code
