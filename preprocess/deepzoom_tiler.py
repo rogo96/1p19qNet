@@ -220,7 +220,9 @@ class DeepZoomStaticTiler(object):
 
 def make_excel(img_slide, img_name, out_base):
     excel_name = img_slide.split(os.sep)[-3] + '.xlsx'
-    excel_path = os.path.join(out_base, '..', 'temp_excel', excel_name)
+    excel_dir = os.path.join(out_base, '..', 'temp_excel')
+    os.makedirs(excel_dir, exist_ok=True)
+    excel_path = os.path.join(excel_dir, excel_name)
     img_class = img_slide.split(os.sep)[-2]
     data_dict = {'Serial Number': [img_name], 'Class': [img_class], 'FISH1': [np.NaN], 'NGS1': [np.NaN], 'FISH19': [np.NaN], 'NGS19': [np.NaN]}
     if not os.path.isfile(excel_path):

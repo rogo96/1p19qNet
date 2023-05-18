@@ -185,7 +185,7 @@ if __name__ == '__main__':
     compute_feats(args, bags_list, i_classifier, total_list, feats_path, tile_poisition_path)
 
     # move excel file in your feature directory 
-    excel_path = os.path.join(feats_path, '..')
+    excel_path = os.path.join(args.tile_path, '..', 'temp_excel')
     excel_file = glob.glob(os.path.join(excel_path, '*.xlsx'))
     if len(excel_file) != 1:
         raise ValueError('Need one excel file in your Data directory, check Feature directory')
