@@ -1,4 +1,4 @@
-name: ttest
+name: 1p19qNet
 channels:
   - pytorch
   - anaconda
