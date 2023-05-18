@@ -16,7 +16,7 @@ This is the official repository for our paper,
 # Environment setup
 To start, we prefer creating the environment using conda:
 ~~~
-conda env create -f environment.yml
+conda env create -f environment.yaml
 conda activate 1p19qNet
 ~~~
 Our GPU is NVIDIA RTX A5000 and we used CUDA 11.3.
