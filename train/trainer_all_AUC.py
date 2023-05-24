@@ -11,6 +11,7 @@ from torch import nn
 from torch.utils.tensorboard import SummaryWriter
 from sklearn.metrics import accuracy_score, plot_roc_curve, recall_score, precision_score, f1_score, roc_curve, auc
 
+
 class Trainer():
     def __init__(self, args, dname_net, cross_val=True):
         # cross_validation 
@@ -80,7 +81,7 @@ class Trainer():
                 loss = self.criterion(predict, ngs_1)
             elif args.ngs_1_19 == 19:
                 loss = self.criterion(predict, ngs_19)
-           
+            print(f'bag label : {bag_label}, predict : {predict}, loss : {loss}')
             # if loss has nan value, stop training
             if torch.isnan(loss):
                 raise ValueError('train loss is nan, check github data preprocessing part (excel)')

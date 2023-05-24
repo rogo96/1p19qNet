@@ -30,8 +30,8 @@ class MIL(Dataset):
         all_files = natsort.natsorted(all_files)
         
         random.shuffle(all_files)
-        train_file_num = math.ceil(len(all_files) * 0.3)
-        val_file_num = math.ceil(len(all_files) * 0.3)
+        train_file_num = math.ceil(len(all_files) * 0.6)
+        val_file_num = math.ceil(len(all_files) * 0.2)
         
         train_files = all_files[ : train_file_num]
         val_files = all_files[train_file_num : (train_file_num + val_file_num)]
